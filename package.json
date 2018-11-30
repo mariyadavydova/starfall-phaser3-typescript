@@ -5,11 +5,12 @@
   "main": "webpack.config.js",
   "scripts": {
     "build": "webpack",
-    "start": "webpack --watch"
+    "start": "webpack --watch & live-server --port=8085"
   },
   "author": "Mariya Davydova",
   "license": "MIT",
   "devDependencies": {
+    "live-server": "^1.2.1",
     "phaser": "^3.15.1",
     "ts-loader": "^5.3.0",
     "typescript": "^3.1.6",
