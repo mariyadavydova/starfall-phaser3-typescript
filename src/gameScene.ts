@@ -1,13 +1,11 @@
 import "phaser"
 
 export class GameScene extends Phaser.Scene {
-  stars: Phaser.Physics.Arcade.Image[];
-  sand: Phaser.Physics.Arcade.Image;
+  sand: Phaser.Physics.Arcade.StaticGroup;
   lastStarTime: number;
-  scoreCaught: number;
-  scoreFallen: number;
   info: Phaser.GameObjects.Text;
-
+  starsCaught: number;
+  starsFallen: number;
 
   constructor() {
     super({
@@ -21,13 +19,18 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.stars = [];
-    this.sand = this.physics.add.image(400, 580, "sand");
-    this.sand.setDisplaySize(800, 40);
-    this.sand.body.immovable = true;
+    this.starsCaught = 0;
+    this.starsFallen = 0;
+
+    this.sand = this.physics.add.staticGroup({
+      key: 'sand',
+      frameQuantity: 20
+    });
+    Phaser.Actions.PlaceOnLine(this.sand.getChildren(),
+      new Phaser.Geom.Line(20, 580, 820, 580));
+    this.sand.refresh();
+
     this.lastStarTime = 0;
-    this.scoreCaught = 0;
-    this.scoreFallen = 0;
     this.info = this.add.text(10, 10, '',
       { font: '24px Arial Bold', fill: '#ffffff' });
 
@@ -37,11 +40,11 @@ export class GameScene extends Phaser.Scene {
     var diff = time - this.lastStarTime;
     if (diff > 1000) {
       this.lastStarTime = time;
-      this.stars.push(this.emitStar());
+      this.emitStar();
     }
-    this.info.text = "Score: " +
-      this.scoreCaught + " caught, " +
-      this.scoreFallen + " fallen.";
+    this.info.text =
+      this.starsCaught + " caught - " +
+      this.starsFallen + " fallen";
   }
 
   private emitStar(): Phaser.Physics.Arcade.Image {
@@ -59,7 +62,7 @@ export class GameScene extends Phaser.Scene {
     star.on('pointerdown', function () {
       star.setTint(0x00ff00);
       star.setVelocity(0, 0);
-      scene.scoreCaught += 1;
+      scene.starsCaught += 1;
       scene.time.delayedCall(100, function (star) {
         star.destroy();
       }, [star], scene)
@@ -67,11 +70,12 @@ export class GameScene extends Phaser.Scene {
 
     this.physics.add.collider(star, this.sand, function () {
       star.setTint(0xff0000);
-      scene.scoreFallen += 1;
+      scene.starsFallen += 1;
       scene.time.delayedCall(100, function (star) {
         star.destroy();
       }, [star], scene)
     });
+
     return star;
   }
 }
