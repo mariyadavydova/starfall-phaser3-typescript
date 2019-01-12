@@ -20,7 +20,7 @@ export class StarfallGame extends Phaser.Game {
   constructor(config: GameConfig) {
     super(config);
   }
-}
+};
 
 window.onload = () => {
   var game = new StarfallGame(config);

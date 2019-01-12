@@ -1,11 +1,11 @@
-import "phaser"
+import "phaser";
 
 export class GameScene extends Phaser.Scene {
-  sand: Phaser.Physics.Arcade.StaticGroup;
-  lastStarTime: number;
-  info: Phaser.GameObjects.Text;
   starsCaught: number;
   starsFallen: number;
+  lastStarTime: number;
+  sand: Phaser.Physics.Arcade.StaticGroup;
+  info: Phaser.GameObjects.Text;
 
   constructor() {
     super({
@@ -13,15 +13,20 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  init(/*params*/): void {
+    this.starsCaught = 0;
+    this.starsFallen = 0;
+    this.lastStarTime = 0;
+  }
+
   preload(): void {
+    this.load.setBaseURL("https://raw.githubusercontent.com/mariyadavydova/" +
+      "starfall-phaser3-typescript/master/");
     this.load.image("star", "assets/star.png");
     this.load.image("sand", "assets/sand.jpg");
   }
 
   create(): void {
-    this.starsCaught = 0;
-    this.starsFallen = 0;
-
     this.sand = this.physics.add.staticGroup({
       key: 'sand',
       frameQuantity: 20
@@ -30,10 +35,8 @@ export class GameScene extends Phaser.Scene {
       new Phaser.Geom.Line(20, 580, 820, 580));
     this.sand.refresh();
 
-    this.lastStarTime = 0;
     this.info = this.add.text(10, 10, '',
       { font: '24px Arial Bold', fill: '#ffffff' });
-
   }
 
   update(time): void {
@@ -47,7 +50,30 @@ export class GameScene extends Phaser.Scene {
       this.starsFallen + " fallen";
   }
 
-  private emitStar(): Phaser.Physics.Arcade.Image {
+  private onClick(star: Phaser.Physics.Arcade.Image): () => void {
+    var scene: GameScene = this;
+    return function () {
+      star.setTint(0x00ff00);
+      star.setVelocity(0, 0);
+      scene.starsCaught += 1;
+      scene.time.delayedCall(100, function (star) {
+        star.destroy();
+      }, [star], scene);
+    }
+  }
+
+  private onFall(star: Phaser.Physics.Arcade.Image): () => void {
+    var scene: GameScene = this;
+    return function () {
+      star.setTint(0xff0000);
+      scene.starsFallen += 1;
+      scene.time.delayedCall(100, function (star) {
+        star.destroy();
+      }, [star], scene);
+    }
+  }
+
+  private emitStar(): void {
     var star: Phaser.Physics.Arcade.Image;
     var x = Phaser.Math.Between(25, 775);
     var y = 26;
@@ -57,25 +83,7 @@ export class GameScene extends Phaser.Scene {
     star.setVelocity(0, 200);
     star.setInteractive();
 
-    var scene: GameScene = this;
-
-    star.on('pointerdown', function () {
-      star.setTint(0x00ff00);
-      star.setVelocity(0, 0);
-      scene.starsCaught += 1;
-      scene.time.delayedCall(100, function (star) {
-        star.destroy();
-      }, [star], scene)
-    });
-
-    this.physics.add.collider(star, this.sand, function () {
-      star.setTint(0xff0000);
-      scene.starsFallen += 1;
-      scene.time.delayedCall(100, function (star) {
-        star.destroy();
-      }, [star], scene)
-    });
-
-    return star;
+    star.on('pointerdown', this.onClick(star));
+    this.physics.add.collider(star, this.sand, this.onFall(star));
   }
-}
+};
