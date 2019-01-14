@@ -13,7 +13,7 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  init(/*params*/): void {
+  init(/*params: any*/): void {
     this.starsCaught = 0;
     this.starsFallen = 0;
     this.lastStarTime = 0;
@@ -39,8 +39,8 @@ export class GameScene extends Phaser.Scene {
       { font: '24px Arial Bold', fill: '#ffffff' });
   }
 
-  update(time): void {
-    var diff = time - this.lastStarTime;
+  update(time: number): void {
+    var diff: number = time - this.lastStarTime;
     if (diff > 1000) {
       this.lastStarTime = time;
       this.emitStar();
@@ -69,6 +69,9 @@ export class GameScene extends Phaser.Scene {
       scene.starsFallen += 1;
       scene.time.delayedCall(100, function (star) {
         star.destroy();
+        if (scene.starsFallen > 2) {
+          this.scene.start("ScoreScene", { starsCaught: scene.starsCaught });
+        }
       }, [star], scene);
     }
   }
