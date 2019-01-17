@@ -1,9 +1,10 @@
 import "phaser";
 
 export class GameScene extends Phaser.Scene {
+  delta: number;
+  lastStarTime: number;
   starsCaught: number;
   starsFallen: number;
-  lastStarTime: number;
   sand: Phaser.Physics.Arcade.StaticGroup;
   info: Phaser.GameObjects.Text;
 
@@ -14,9 +15,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   init(/*params: any*/): void {
+    this.delta = 1000;
+    this.lastStarTime = 0;
     this.starsCaught = 0;
     this.starsFallen = 0;
-    this.lastStarTime = 0;
   }
 
   preload(): void {
@@ -36,43 +38,44 @@ export class GameScene extends Phaser.Scene {
     this.sand.refresh();
 
     this.info = this.add.text(10, 10, '',
-      { font: '24px Arial Bold', fill: '#ffffff' });
+      { font: '24px Arial Bold', fill: '#FBFBAC' });
   }
 
   update(time: number): void {
     var diff: number = time - this.lastStarTime;
-    if (diff > 1000) {
+    if (diff > this.delta) {
       this.lastStarTime = time;
+      if (this.delta > 500) {
+        this.delta -= 20;
+      }
       this.emitStar();
     }
     this.info.text =
       this.starsCaught + " caught - " +
-      this.starsFallen + " fallen";
+      this.starsFallen + " fallen (max 3)";
   }
 
   private onClick(star: Phaser.Physics.Arcade.Image): () => void {
-    var scene: GameScene = this;
     return function () {
       star.setTint(0x00ff00);
       star.setVelocity(0, 0);
-      scene.starsCaught += 1;
-      scene.time.delayedCall(100, function (star) {
+      this.starsCaught += 1;
+      this.time.delayedCall(100, function (star) {
         star.destroy();
-      }, [star], scene);
+      }, [star], this);
     }
   }
 
   private onFall(star: Phaser.Physics.Arcade.Image): () => void {
-    var scene: GameScene = this;
     return function () {
       star.setTint(0xff0000);
-      scene.starsFallen += 1;
-      scene.time.delayedCall(100, function (star) {
+      this.starsFallen += 1;
+      this.time.delayedCall(100, function (star) {
         star.destroy();
-        if (scene.starsFallen > 2) {
-          this.scene.start("ScoreScene", { starsCaught: scene.starsCaught });
+        if (this.starsFallen > 2) {
+          this.scene.start("ScoreScene", { starsCaught: this.starsCaught });
         }
-      }, [star], scene);
+      }, [star], this);
     }
   }
 
@@ -86,7 +89,7 @@ export class GameScene extends Phaser.Scene {
     star.setVelocity(0, 200);
     star.setInteractive();
 
-    star.on('pointerdown', this.onClick(star));
-    this.physics.add.collider(star, this.sand, this.onFall(star));
+    star.on('pointerdown', this.onClick(star), this);
+    this.physics.add.collider(star, this.sand, this.onFall(star), null, this);
   }
 };
